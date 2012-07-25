@@ -1,6 +1,6 @@
 N-Programming-Language
 ======================
 
-A simple interpreter and programming language
+A simple compiler and programming language
 
 Comming Soon...
