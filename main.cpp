@@ -37,7 +37,6 @@ void    EndAssembly();
 void    BuildProgram();   
 void    Error(int);       
 
-
 string  GetCommand();     
 string  GetString();      
 string  GetNumber();  
