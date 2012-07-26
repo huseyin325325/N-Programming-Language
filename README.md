@@ -3,4 +3,4 @@ N-Programming-Language
 
 A simple compiler and programming language
 
-Comming Soon...
+Version: v0.0.1
