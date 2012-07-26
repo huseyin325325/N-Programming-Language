@@ -45,10 +45,10 @@ string  Getlength(string str);
 void	SkipWhitespace(); 
 void	GetEOL();        
 
-
+/***/
 void    WriteLine(string);
 void    WriteData(string);           
-void    Rem();            
+/***/         
 void    Write(string); 
 void 	Writeln(string);   
           
@@ -228,10 +228,6 @@ void Compile()
 			
 			++Position;
 			continue;
-		}
-		else if (Source[Position]=='#')
-		{
-			Rem();
 		}
 		else if (Command == "WRITE")
 		{
