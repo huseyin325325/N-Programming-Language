@@ -515,14 +515,6 @@ void Writeln(string Line)
 
 
 
-
-void Rem()
-{
-	while (Position < Size && Source[Position] != '\n')
-		++Position;
-}
-
-
 string ToStr(int Number){
 	string Result;
 	char Temp[128];
