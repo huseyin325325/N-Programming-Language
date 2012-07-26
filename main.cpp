@@ -40,19 +40,18 @@ void    Error(int);
 
 string  GetCommand();     
 string  GetString();      
-string  GetNumber();      
+string  GetNumber();  
+string  Getlength(string str);    
 void	SkipWhitespace(); 
 void	GetEOL();        
 
 
 void    WriteLine(string);
-void    WriteData(string);
-void    Cls();            
+void    WriteData(string);           
 void    Rem();            
-void    Print(string);    
-void    Run(string);      
-void    Sleep(string);    
-void    Wait();           
+void    Write(string); 
+void 	Writeln(string);   
+          
 
 
 string 	ToStr(int Number);
@@ -179,18 +178,6 @@ void ReadSource()
 void StartAssembly()
 {
 
-	WriteLine("EXTERN	system");
-	WriteLine("EXTERN	puts");
-	WriteLine("EXTERN	getchar");
-	WriteLine("EXTERN 	exit");
-	
-
-	#ifdef Windows
-		WriteLine("EXTERN	_sleep");
-	#endif
-	#ifdef Linux
-		WriteLine("EXTERN	sleep");
-	#endif
 	
 
 	WriteLine("");
@@ -200,12 +187,6 @@ void StartAssembly()
 	WriteData("");
 	
 
-	#ifdef Windows
-		WriteData("ClearScreen 		db \"cls\",0");
-	#endif
-	#ifdef Linux
-		WriteData("ClearScreen 		db \"clear\",0");
-	#endif
 	
 
 	WriteLine("section .text");
@@ -252,30 +233,14 @@ void Compile()
 		{
 			Rem();
 		}
-		else if (Command == "CLS")
+		else if (Command == "WRITE")
 		{
 			
-			Cls();
+			Write(GetString());
 		}
-		else if (Command == "PRINT")
+		else if (Command == "WRITELN")
 		{
-			
-			Print(GetString());
-		}
-		else if (Command == "RUN")
-		{
-			
-			Run(GetString());
-		}
-		else if (Command == "SLEEP")
-		{
-			
-			Sleep(GetNumber());
-		}
-		else if (Command == "WAIT")
-		{
-			
-			Wait();
+			Writeln(GetString());
 		}
 		else
 		{
@@ -302,17 +267,11 @@ void EndAssembly()
 	if (!File)
 		Error(ERROR_NOASSEMBLY);
 	
-	Print("Press ENTER to exit...");
-	Wait();
 	
 
-	WriteLine("MOV	ESP, EBP");
-	WriteLine("POP	EBP");
-	WriteLine("POPA	");
-	WriteLine("PUSH	0");
-	WriteLine("CALL	exit");
-	WriteLine("");
-	WriteLine("");
+	WriteLine("MOV EAX,1");
+	WriteLine("MOV EBX,0");
+	WriteLine("INT 80h");
 	
 
 	fwrite(AsmCode.c_str(), AsmCode.length(), 1, File);
@@ -339,9 +298,7 @@ void BuildProgram()
 		system(Command.c_str());
 		
 
-		Command = "ld -s -dynamic-linker /lib/ld-linux.a -o ";
-		Command+= "\"" + FileName + "\" \"" + FileName + ".o\"";
-		Command+= " /lib/libc.a";
+		Command = "ld -o " + FileName +" " + FileName + ".o";
 		system(Command.c_str());
 	#endif
 	
@@ -529,15 +486,8 @@ void WriteData(string AsmLine)
 }
 
 
-void Cls()
-{
-	WriteLine("PUSH	ClearScreen");
-	WriteLine("CALL	system");
-	WriteLine("POP	EAX");
-}
 
-
-void Print(string Line)
+void Write(string Line)
 {
 
 	string Name = "String_" + ToStr(DataCounter);
@@ -545,59 +495,30 @@ void Print(string Line)
 	
 
 	WriteData(Name + " 		db \"" + Line + "\",0");
-	
-
-	WriteLine("PUSH	" + Name);
-	WriteLine("CALL	puts");
-	WriteLine("POP	EAX");
+	string Length = Getlength(Name);
+	WriteLine("MOV EAX,4");
+	WriteLine("MOV EBX,1");
+	WriteLine("MOV ECX," + Name);
+	WriteLine("MOV EDX," +Length);
+	WriteLine("INT 80h");
 }
 
-void Run(string Command)
+void Writeln(string Line)
 {
-
 	string Name = "String_" + ToStr(DataCounter);
 	DataCounter++;
+	WriteData(Name + " 		db \"" + Line + "\",0x0A");
+	string Length = Getlength(Name);
+	WriteLine("MOV EAX,4");
+	WriteLine("MOV EBX,1");
+	WriteLine("MOV ECX," + Name);
+	WriteLine("MOV EDX," +Length);
+	WriteLine("INT 80h");
 	
-
-	WriteData(Name + " 		db \"" + Command + "\",0");
-	
-
-	WriteLine("PUSH	" + Name);
-	WriteLine("CALL	system");
-	WriteLine("POP	EAX");
 }
 
 
-void Sleep(string Seconds)
-{
 
-	#ifdef Windows
-		WriteLine("MOV	EAX," + Seconds);
-		WriteLine("MOV	EDX,1000");
-		WriteLine("MUL	EDX");
-		WriteLine("PUSH	EAX");
-	#endif
-	#ifdef Linux
-		WriteLine("PUSH	" + Seconds);
-	#endif
-	
-
-	#ifdef Windows
-		WriteLine("CALL	_sleep");
-	#endif
-	#ifdef Linux
-		WriteLine("CALL	sleep");
-	#endif
-	
-
-	WriteLine("POP	EAX");
-}
-
-
-void Wait()
-{
-	WriteLine("CALL	getchar");
-}
 
 
 void Rem()
@@ -626,5 +547,13 @@ string StripExt(string FileName)
 		return FileName.substr(0, Dot);
 
 	return FileName;
+}
+
+string Getlength(string str)
+{
+	string eq=str+"_length";
+	WriteData(eq + " equ $-"+str);
+	return eq;
+	
 }
 
