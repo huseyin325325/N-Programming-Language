@@ -1,4 +1,4 @@
-write "Hello "
+writeln "Hello World"
+write "Welcome To Digital"
 write "World"
-writeln " "
-writeln "Welcome to Digital World"
+Wait

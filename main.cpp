@@ -7,8 +7,8 @@
 using namespace std;
 
 	
-//#define Windows	1
-#define Linux	2
+#define Windows	1
+//#define Linux	2
 enum Error{ERROR_FATAL = -1, ERROR_COMMANDLINE, ERROR_FILENAME, 
 		   ERROR_BADCOMMAND, ERROR_STARTSTRING, ERROR_ENDSTRING, 
 		   ERROR_NOEOL, ERROR_EOLFOUND, ERROR_NOASSEMBLY};
@@ -50,7 +50,7 @@ void    WriteData(string);
 /***/         
 void    Write(string); 
 void 	Writeln(string);   
-          
+void    Wait();          
 
 
 string 	ToStr(int Number);
@@ -178,8 +178,10 @@ void StartAssembly()
 {
 
 	
-
-	WriteLine("");
+   WriteLine("EXTERN _printf");
+   WriteLine("EXTERN _getchar");
+   WriteLine("EXTERN _exit");
+   WriteLine("");
 	
 
 	WriteData("section .data");
@@ -192,12 +194,12 @@ void StartAssembly()
 	WriteLine("");
 	
 	#ifdef Windows
-		WriteLine("global	START");
-		WriteLine("START:	");
+		WriteLine("global	_main");
+		WriteLine("_main:	");
 	#endif
 	#ifdef Linux
-		WriteLine("global	_start");
-		WriteLine("_start:	");
+		WriteLine("global	_main");
+		WriteLine("_main:	");
 	#endif
 
 
@@ -237,6 +239,10 @@ void Compile()
 		{
 			Writeln(GetString());
 		}
+		else if (Command == "WAIT")
+		{
+             Wait();
+        }
 		else
 		{
 		
@@ -263,10 +269,8 @@ void EndAssembly()
 		Error(ERROR_NOASSEMBLY);
 	
 	
-
-	WriteLine("MOV EAX,1");
-	WriteLine("MOV EBX,0");
-	WriteLine("INT 80h");
+    WriteLine("PUSH 0x0");
+    WriteLine("CALL _exit");
 	
 
 	fwrite(AsmCode.c_str(), AsmCode.length(), 1, File);
@@ -283,8 +287,7 @@ void BuildProgram()
 		system(Command.c_str());
 		
 
-		Command = "nlink /CONSOLE /ni \"" +FileName + ".obj\"";
-		Command = Command + " msvcrt.dll";
+		Command = "gcc -o  " + FileName +".exe " + FileName + ".obj -e _main ";
 		system(Command.c_str());
 	#endif
 	#ifdef Linux
@@ -293,7 +296,7 @@ void BuildProgram()
 		system(Command.c_str());
 		
 
-		Command = "ld -o " + FileName +" " + FileName + ".o";
+		Command = "gcc -o " + FileName +" " + FileName + ".o";
 		system(Command.c_str());
 	#endif
 	
@@ -490,12 +493,8 @@ void Write(string Line)
 	
 
 	WriteData(Name + " 		db \"" + Line + "\",0");
-	string Length = Getlength(Name);
-	WriteLine("MOV EAX,4");
-	WriteLine("MOV EBX,1");
-	WriteLine("MOV ECX," + Name);
-	WriteLine("MOV EDX," +Length);
-	WriteLine("INT 80h");
+    WriteLine("PUSH " + Name);
+    WriteLine("CALL _printf");
 }
 
 void Writeln(string Line)
@@ -503,13 +502,13 @@ void Writeln(string Line)
 	string Name = "String_" + ToStr(DataCounter);
 	DataCounter++;
 	WriteData(Name + " 		db \"" + Line + "\",0x0A");
-	string Length = Getlength(Name);
-	WriteLine("MOV EAX,4");
-	WriteLine("MOV EBX,1");
-	WriteLine("MOV ECX," + Name);
-	WriteLine("MOV EDX," +Length);
-	WriteLine("INT 80h");
-	
+    WriteLine("PUSH " + Name);
+    WriteLine("CALL _printf");
+}
+void Wait()
+{
+     WriteLine("PUSH 0x0");
+     WriteLine("CALl _getchar");
 }
 
 
